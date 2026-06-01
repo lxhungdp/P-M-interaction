@@ -1,0 +1,29 @@
+---
+description: 01-PM project architecture and layer boundaries
+alwaysApply: true
+---
+
+# PM Core Architecture
+
+## Layers
+
+- `app.py` — entry only (page config, layout, delegate to `pm_app/ui`)
+- `pm_app/` — Streamlit app layer + `run_pm_analysis()` pipeline
+- `src/` — pure engine (no Streamlit imports)
+
+## Rules
+
+1. Business logic → `pm_app/pipeline.py` or `src/`, never bloated `app.py`
+2. No root `patch_*.py` / `fix_*.py` — edit source files; archive is `tools/archive/`
+3. No debug `print()` in mesh/analysis loops
+4. Read `docs/sign-conventions.md` before changing N/M/strain handling
+5. Large changes: add/update `tests/golden/*.yaml` first or alongside
+6. UI labels stay Korean unless user requests otherwise
+
+## Key entry points
+
+- Analysis: `pm_app.pipeline.run_pm_analysis(AnalysisInputs)`
+- Inputs model: `pm_app.models.AnalysisInputs`
+- Codes: `src.codes.CODES`
+
+See `AGENTS.md` for full map.

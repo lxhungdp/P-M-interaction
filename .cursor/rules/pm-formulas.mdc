@@ -1,0 +1,39 @@
+---
+description: Formula and code-standard rules for analysis engine
+globs: src/analysis/**/*.py,src/codes/**/*.py,src/materials/**/*.py,src/geometry/**/*.py,src/section/**/*.py,pm_app/pipeline.py,pm_app/pm_checks.py,pm_app/section_builder.py
+alwaysApply: false
+---
+
+# PM Formulas & Codes
+
+## Sign conventions (mandatory)
+
+- N: compression +
+- Strain: compression +
+- See `docs/sign-conventions.md`
+
+## KDS 24 14 21:2025
+
+```
+fcd = αcc × fck × Φc    # multiply Φc (e.g. 0.65), NOT fck/γc
+fyd = fy × Φs
+```
+
+Implement code-specific logic in `src/codes/`, not duplicated in UI.
+
+## Fiber analysis flow
+
+1. Slice mesh → fibers (`section_builder.build_section`)
+2. ε(y′) = ε₀ + κ·y′ (plane sections)
+3. N = Σσ·A, M = Σσ·A·y′
+4. P-M diagram: neutral axis depth sweep
+
+## When editing solver/engine
+
+- Match existing function names in `src/analysis/engine.py`, `solver.py`
+- Preserve `pm_cache` dict keys consumed by `pm_app/ui/panel_output.py`
+- Run `pytest tests/` after formula changes
+
+## Mesh auto-tune
+
+Constants in `pm_app/config.py`: `MESH_AG_TOL`, `MESH_CB_TOL`, `MESH_NY_CAP`

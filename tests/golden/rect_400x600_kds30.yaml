@@ -1,0 +1,49 @@
+id: rect_400x600_kds30
+description: "400×600 rectangular column, KDS 30 MPa, 4×D32 top/bot — baseline case"
+
+inputs:
+  code_name: "KDS 24 14 21:2025"
+  fck: 30
+  fy: 400
+  curve_conc: parabolic_rectangular
+  sec_type: "직사각형"
+  b: 400
+  h: 600
+  cover: 70
+  bar_dia: 32
+  rb_list: []
+  n_top: 4
+  n_bot: 4
+  n_left: 0
+  n_right: 0
+  poly_outer: null
+  poly_holes: []
+  poly_rebar_positions: []
+  use_strand: false
+  strand_dia_val: 15.2
+  strand_pos: []
+  fpk_val: 0
+  fp01k_val: 0
+  Ep_val: 0
+  fpe_val: 0
+  eps_pe_val: 0
+  avg_Mx: 1.0
+  avg_My: 0.0
+  theta_rad: 0.0
+  theta_deg_auto: 0.0
+  sym_check: false
+  n_pts: 200
+  ny_fiber: 120
+  df_loads:
+    극단: [false]
+    케이스: ["LC1"]
+    "Pu [kN]": [3000.0]
+    "Mx [kN·m]": [450.0]
+    "My [kN·m]": [0.0]
+
+expected:
+  skip: true
+  # Fill after manual confirmation in verification tab:
+  # N_max_v: { abs_tol: 100 }
+  # N_bal: { rel_pct: 2.0 }
+  # M_bal: { rel_pct: 2.0 }

@@ -1,0 +1,40 @@
+---
+description: Streamlit UI patterns for pm_app
+globs: app.py,pm_app/ui/**/*.py
+alwaysApply: false
+---
+
+# PM Streamlit UI
+
+## Structure
+
+- `app.py` — columns, collapse toggle, call `render_input_panel` / `render_output_panel`
+- `panel_input.py` — widgets → `AnalysisInputs`
+- `panel_output.py` — cache restore, tabs 1–5
+- `tabs/tab_verify.py` — tab 6 only
+- `assets.py` — CSS/JS (Ctrl+S shortcut, column drag)
+
+## Session state
+
+- `pm_cache` — result of `run_pm_analysis()`
+- `show_preview`, `inp_expand`, `inp_width` — UI prefs
+- `v_analysis_done` — verification tab reset on re-run
+
+## Run button pattern
+
+```python
+if run:
+    with st.spinner("..."):
+        st.session_state["pm_cache"] = run_pm_analysis(inputs)
+    st.session_state["v_analysis_done"] = False
+```
+
+Do **not** inline mesh/diagram logic in UI modules — use `pipeline.py`.
+
+## Adding a tab
+
+Prefer new file under `pm_app/ui/tabs/` with `render_tab_*(ctx: dict)` if large.
+
+## Matplotlib
+
+Use `Agg` backend; `plt.close(fig)` after `st.pyplot()`.

@@ -1,0 +1,18 @@
+---
+description: Ban one-off patch scripts at repo root
+alwaysApply: true
+---
+
+# No patch scripts
+
+Do **not** create or use root-level `patch_*.py`, `fix_*.py`, or similar one-off editors.
+
+## Instead
+
+- Edit `app.py`, `pm_app/`, or `src/` directly
+- Use git for history
+- Legacy scripts are in `tools/archive/` (reference only, not runtime)
+
+## Why
+
+Patch scripts caused drift, duplicate logic, and made review/scaling impossible.
