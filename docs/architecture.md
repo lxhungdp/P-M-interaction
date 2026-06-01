@@ -18,8 +18,8 @@ flowchart TB
 
 1. **Input** — `render_input_panel()` → `AnalysisInputs`
 2. **Run** — `run_pm_analysis(inputs)` → `pm_cache` dict → `st.session_state`
-3. **Output** — `render_output_panel()` unpacks cache, renders 6 tabs
-4. **Verify** — Tab 6 compares engine vs user reference values
+3. **Output** — `render_output_panel()` → `OutputContext.from_cache()` → tab modules
+4. **Verify** — Tab 6 uses `VerifyContext` (from `ctx.to_verify()`)
 
 ## `pm_cache` keys (main)
 

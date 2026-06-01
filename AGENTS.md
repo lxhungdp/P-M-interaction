@@ -24,11 +24,12 @@ pm_app/
   pm_checks.py         # Capacity / utilization helpers
   pipeline.py          # run_pm_analysis() — core orchestration
   viz/section_draw.py  # Matplotlib section plots
-  ui/
+    ui/
     assets.py          # CSS/JS injection
-    panel_input.py     # Left input panel
-    panel_output.py    # Right output + tabs 1–5
-    tabs/tab_verify.py # Tab 6 verification UI
+    context.py           # OutputContext, VerifyContext
+    panel_input.py       # Left input panel
+    panel_output.py      # Right output shell + tab dispatch
+    tabs/                # tab_pm, tab_section, tab_strain, tab_geometry, tab_detail, tab_verify
 src/                   # Engine (analysis, geometry, materials, codes)
 tests/golden/          # YAML regression cases
 docs/                  # Architecture, sign conventions, verification

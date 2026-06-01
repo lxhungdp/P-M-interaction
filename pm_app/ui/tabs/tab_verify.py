@@ -17,30 +17,26 @@ from src.materials.strand import Strand
 from pm_app.config import VERIFY_REF_ERR_PCT
 from pm_app.pm_checks import ray_intersect_pm_curve
 from pm_app.section_builder import ag_theory_mm2, h_eff_and_cb_theory
+from pm_app.ui.context import VerifyContext
 
 
-def render_tab_verify(ctx: dict) -> None:
-    g = ctx
-    def _get(name, default=None):
-        return g.get(name, default)
-
-
-    code_name = g["code_name"]
-    section = g["section"]
-    geo = g["geo"]
-    b, h = g["b"], g["h"]
-    sec_type = g["sec_type"]
-    theta_rad = g["theta_rad"]
-    fck, fy = g["fck"], g["fy"]
-    fcd_val, fyd_val, ecu_val = g["fcd_val"], g["fyd_val"], g["ecu_val"]
-    N_max_v, N_bal, M_bal = g["N_max_v"], g["N_bal"], g["M_bal"]
-    eps_bal_top, eps_bal_bot = g["eps_bal_top"], g["eps_bal_bot"]
-    load_cases = g["load_cases"]
-    lc1_Pn_cap, lc1_Mn_cap, lc1_eps_bot = g.get("lc1_Pn_cap"), g.get("lc1_Mn_cap"), g.get("lc1_eps_bot")
-    N_des, M_des = g["N_des"], g["M_des"]
-    n_pts = g["n_pts"]
-    n_top, n_bot, n_left, n_right = g["n_top"], g["n_bot"], g["n_left"], g["n_right"]
-    Ag_theory_cached = g["Ag_theory_cached"]
+def render_tab_verify(ctx: VerifyContext) -> None:
+    code_name = ctx.code_name
+    section = ctx.section
+    geo = ctx.geo
+    b, h = ctx.b, ctx.h
+    sec_type = ctx.sec_type
+    theta_rad = ctx.theta_rad
+    fck, fy = ctx.fck, ctx.fy
+    fcd_val, fyd_val, ecu_val = ctx.fcd_val, ctx.fyd_val, ctx.ecu_val
+    N_max_v, N_bal, M_bal = ctx.N_max_v, ctx.N_bal, ctx.M_bal
+    eps_bal_top, eps_bal_bot = ctx.eps_bal_top, ctx.eps_bal_bot
+    load_cases = ctx.load_cases
+    lc1_Pn_cap, lc1_Mn_cap, lc1_eps_bot = ctx.lc1_Pn_cap, ctx.lc1_Mn_cap, ctx.lc1_eps_bot
+    N_des, M_des = ctx.N_des, ctx.M_des
+    n_pts = ctx.n_pts
+    n_top, n_bot, n_left, n_right = ctx.n_top, ctx.n_bot, ctx.n_left, ctx.n_right
+    Ag_theory_cached = ctx.Ag_theory_cached
     # ── 저장용 세션키 초기화 (위젯 key와 분리, on_change로 동기화) ──
     _vref_store_defs = {
         # 1. 축압축강도

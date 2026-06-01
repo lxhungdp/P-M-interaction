@@ -42,8 +42,19 @@ inputs:
     "My [kN·m]": [0.0]
 
 expected:
-  skip: true
-  # Fill after manual confirmation in verification tab:
-  # N_max_v: { abs_tol: 100 }
-  # N_bal: { rel_pct: 2.0 }
-  # M_bal: { rel_pct: 2.0 }
+  skip: false
+  N_max_v:
+    value: 3978.0
+    rel_pct: 0.5
+  N_bal:
+    value: 2053.93
+    rel_pct: 0.5
+  M_bal:
+    value: 287.86
+    rel_pct: 0.5
+  c_bal_mm:
+    value: 387.80
+    rel_pct: 0.5
+  Ag_theory:
+    value: 240000.0
+    abs_tol: 1.0
