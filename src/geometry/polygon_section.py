@@ -194,12 +194,13 @@ class PolygonSection:
                 outer_segs = _subtract_segs(outer_segs, hole_segs)
         return outer_segs
 
-    def mesh_slices(self, ny: int = 120) -> List[Tuple[float, float, float]]:
+    def mesh_slice_rows(self, ny: int = 120) -> List[dict]:
         """
-        Horizontal slices: trapezoidal strip areas; vertex y refines boundaries.
+        Horizontal slice mesh with strip dimensions (for export / review).
 
         Returns:
-            List[(x_centroid, y_centroid, area)] in input coordinates.
+            List of dicts: slice_no, y_bottom_mm, y_top_mm, h_mm, w_bottom_mm,
+            w_top_mm, x_centroid_mm, y_centroid_mm, area_mm2
         """
         xmin, ymin, xmax, ymax = self.outer.bounding_box()
         h_tot = ymax - ymin
@@ -213,7 +214,8 @@ class PolygonSection:
                 if ymin < vyf < ymax:
                     y_levels.add(vyf)
         ys = sorted(y_levels)
-        fibers: List[Tuple[float, float, float]] = []
+        rows: List[dict] = []
+        slice_no = 0
         for ya, yb in zip(ys[:-1], ys[1:]):
             h = yb - ya
             if h < 1e-15:
@@ -246,8 +248,31 @@ class PolygonSection:
                 x_c = mx0 / w0
             else:
                 x_c = mx1 / w1
-            fibers.append((x_c, y_c, A))
-        return fibers
+            slice_no += 1
+            rows.append({
+                "slice_no": slice_no,
+                "y_bottom_mm": ya,
+                "y_top_mm": yb,
+                "h_mm": h,
+                "w_bottom_mm": w0,
+                "w_top_mm": w1,
+                "x_centroid_mm": x_c,
+                "y_centroid_mm": y_c,
+                "area_mm2": A,
+            })
+        return rows
+
+    def mesh_slices(self, ny: int = 120) -> List[Tuple[float, float, float]]:
+        """
+        Horizontal slices: trapezoidal strip areas; vertex y refines boundaries.
+
+        Returns:
+            List[(x_centroid, y_centroid, area)] in input coordinates.
+        """
+        return [
+            (r["x_centroid_mm"], r["y_centroid_mm"], r["area_mm2"])
+            for r in self.mesh_slice_rows(ny)
+        ]
 
     def mesh_grid(self, nx: int = 30, ny: int = 120) -> List[Tuple[float, float, float]]:
         """

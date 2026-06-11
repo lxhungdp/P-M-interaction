@@ -5,6 +5,7 @@ from __future__ import annotations
 import matplotlib.pyplot as plt
 import streamlit as st
 
+from pm_app.export_workbook import build_calc_workbook_bytes
 from pm_app.models import AnalysisInputs
 from pm_app.pipeline import run_pm_analysis
 from pm_app.ui.context import OutputContext
@@ -88,6 +89,21 @@ def render_output_panel(inputs: AnalysisInputs, run: bool, code) -> None:
         st.caption(
             "콘크리트 파이버 면적을 이론 Ag에 맞게 보정했습니다. "
             "철근·강연선 면적은 그대로입니다.")
+
+    _xl_col1, _xl_col2 = st.columns([3, 1])
+    with _xl_col2:
+        try:
+            _xlsx = build_calc_workbook_bytes(cache, inputs, code)
+            st.download_button(
+                "📥 전체 계산 Excel",
+                data=_xlsx,
+                file_name="pm_calc_full.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                help="입력·출력·메시·P-M 데이터·P-M 차트(이미지+엑셀) 포함",
+            )
+        except ImportError:
+            st.caption("Excel: pip install openpyxl Pillow")
 
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(
         ["📊 P-M 상관도", "🔍 단면 시각화", "🧮 변형률 해석",

@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
+
+from src.materials.concrete import Concrete
 
 from src.analysis.engine import (
     PM_DIAGRAM_ETU,
@@ -25,7 +27,12 @@ from src.materials.strand import Strand
 from pm_app.config import MESH_AG_TOL, MESH_CB_TOL, MESH_MAX_ITER, MESH_NY_CAP
 from pm_app.models import AnalysisInputs
 from pm_app.pm_checks import half_pm_curve, p0_point, ray_intersect_pm_curve
-from pm_app.section_builder import ag_theory_mm2, build_section, h_eff_and_cb_theory
+from pm_app.section_builder import (
+    ag_theory_mm2,
+    build_section,
+    h_eff_and_cb_theory,
+    polygon_section_for_inputs,
+)
 
 
 def run_pm_analysis(inputs: AnalysisInputs) -> Dict[str, Any]:
@@ -57,8 +64,10 @@ def run_pm_analysis(inputs: AnalysisInputs) -> Dict[str, Any]:
     section = None
     section_nom = None
     ag_mesh_normalized = False
+    ag_mesh_scale = 1.0
+    mesh_iterations: List[Dict[str, Any]] = []
 
-    for _ in range(MESH_MAX_ITER):
+    for iter_no in range(1, MESH_MAX_ITER + 1):
         ny_cur = min(int(ny_try), MESH_NY_CAP)
         section, _, _ = build_section(
             inputs.b,
@@ -108,7 +117,7 @@ def run_pm_analysis(inputs: AnalysisInputs) -> Dict[str, Any]:
         )
         ag_m = section.gross_area()
         ag_err_r = abs(ag_m - ag_theory_run) / ag_theory_run if ag_theory_run > 1e-9 else 0.0
-        _, cb_t = h_eff_and_cb_theory(
+        h_eff, cb_t = h_eff_and_cb_theory(
             section,
             inputs.theta_rad,
             ecu_val,
@@ -125,7 +134,32 @@ def run_pm_analysis(inputs: AnalysisInputs) -> Dict[str, Any]:
         c_bal_try = float(bpm.c_mm) if bpm.c_mm < 1e8 else max(ytr2 - ybr2, 1.0) * 0.5
         cb_err_r = abs(c_bal_try - cb_t) / cb_t if cb_t > 1e-6 else 0.0
         ny_used = ny_cur
-        if ag_err_r <= MESH_AG_TOL and cb_err_r <= MESH_CB_TOL:
+        n_conc = sum(1 for f in section.fibers if isinstance(f.material, Concrete))
+        n_rb = sum(1 for f in section.fibers if isinstance(f.material, Rebar))
+        n_st = sum(1 for f in section.fibers if isinstance(f.material, Strand))
+        converged = ag_err_r <= MESH_AG_TOL and cb_err_r <= MESH_CB_TOL
+        stop_reason = ""
+        if converged:
+            stop_reason = "converged"
+        elif ny_cur >= MESH_NY_CAP:
+            stop_reason = "ny_cap"
+        mesh_iterations.append({
+            "iter": iter_no,
+            "ny": ny_cur,
+            "n_concrete_slices": n_conc,
+            "n_rebar": n_rb,
+            "n_strand": n_st,
+            "ag_mesh_mm2": float(ag_m),
+            "ag_theory_mm2": float(ag_theory_run),
+            "ag_err_pct": float(ag_err_r * 100.0),
+            "h_eff_mm": float(h_eff),
+            "cb_theory_mm": float(cb_t),
+            "cb_mesh_mm": float(c_bal_try),
+            "cb_err_pct": float(cb_err_r * 100.0),
+            "converged": converged,
+            "stop_reason": stop_reason,
+        })
+        if converged:
             break
         if ny_cur >= MESH_NY_CAP:
             mesh_warn = (
@@ -137,13 +171,29 @@ def run_pm_analysis(inputs: AnalysisInputs) -> Dict[str, Any]:
         ny_try = ny_cur + max(10, ny_cur // 8)
     else:
         mesh_warn = "Mesh auto-tune iteration limit; increase ny in solver settings."
+        if mesh_iterations:
+            mesh_iterations[-1]["stop_reason"] = "max_iter"
 
     if ag_theory_run > 1e-9:
         ag_err_fin = abs(section.gross_area() - ag_theory_run) / ag_theory_run
         if ag_err_fin > MESH_AG_TOL:
-            section.normalize_concrete_to_ag_theory(float(ag_theory_run))
+            ag_mesh_scale = section.normalize_concrete_to_ag_theory(float(ag_theory_run))
             section_nom.normalize_concrete_to_ag_theory(float(ag_theory_run))
             ag_mesh_normalized = True
+
+    mesh_slice_rows: List[Dict[str, Any]] = []
+    ps_export = polygon_section_for_inputs(
+        inputs.sec_type, inputs.b, inputs.h, inputs.poly_outer, inputs.poly_holes
+    )
+    if ps_export is not None:
+        for row in ps_export.mesh_slice_rows(ny_used):
+            scaled = dict(row)
+            if ag_mesh_normalized and ag_mesh_scale != 1.0:
+                scaled["area_mm2"] = row["area_mm2"] * ag_mesh_scale
+                scaled["area_note"] = f"×{ag_mesh_scale:.6f} Ag 보정"
+            else:
+                scaled["area_note"] = ""
+            mesh_slice_rows.append(scaled)
 
     geo = section.geometric_properties(theta=inputs.theta_rad)
     pm_des = compute_pm_diagram(
@@ -280,4 +330,7 @@ def run_pm_analysis(inputs: AnalysisInputs) -> Dict[str, Any]:
         "mesh_warn": mesh_warn,
         "Ag_theory": float(ag_theory_run),
         "Ag_mesh_normalized": ag_mesh_normalized,
+        "ag_mesh_scale": float(ag_mesh_scale),
+        "mesh_iterations": mesh_iterations,
+        "mesh_slice_rows": mesh_slice_rows,
     }

@@ -116,6 +116,24 @@ def h_eff_and_cb_theory(
     return h_eff, cb_est
 
 
+def polygon_section_for_inputs(
+    sec_type: str,
+    b: float,
+    h: float,
+    poly_outer: Optional[list],
+    poly_holes: list,
+) -> Optional[PolygonSection]:
+    """Outer polygon for mesh slice export (input coordinates, centroid at origin later)."""
+    if sec_type == "직사각형":
+        return PolygonSection(make_rectangle(b, h).vertices, [])
+    if sec_type == "원형":
+        return PolygonSection(make_circle(radius=b / 2, n_seg=256).vertices, [])
+    if sec_type == "임의 다각형" and poly_outer and len(poly_outer) >= 3:
+        holes = [np.asarray(ho, dtype=float) for ho in (poly_holes or [])]
+        return PolygonSection(np.asarray(poly_outer, dtype=float), holes)
+    return None
+
+
 def build_section(
     b,
     h,
